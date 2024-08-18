@@ -1,0 +1,38 @@
+import numpy as np
+import pandas as pd
+import sys
+import scipy
+
+np.set_printoptions(threshold=sys.maxsize)
+np.set_printoptions(suppress=True,precision=4)
+
+stocks=pd.ExcelFile(r'C:\Users\cheth\OneDrive\Documents\Stock.xlsx')
+sheets=stocks.sheet_names
+print(sheets)
+returns=np.zeros((249,len(sheets)))
+
+for ni,i in enumerate(sheets):
+    print(ni,i)
+    stock1=pd.read_excel(r'C:\Users\cheth\OneDrive\Documents\Stock.xlsx',i)
+    for n in range (1,250):
+        dayreturn=(stock1.loc[n,'Close']-stock1.loc[n-1,'Close'])/stock1.loc[n-1,'Close']
+        returns[n-1,ni]=dayreturn
+correlation=np.corrcoef(returns.T,bias=0)
+
+cov_matrix = np.dot(returns.T, returns) / (returns.shape[0] - 1)
+
+# Compute the standard deviations of each stock
+std_devs = np.sqrt(np.diag(cov_matrix))
+
+# Compute the correlation matrix
+correlation = cov_matrix / np.outer(std_devs, std_devs)
+
+df = pd.DataFrame(correlation)
+
+for i in range(len(sheets)):
+    for j in range(len(sheets)):
+        if i>j:
+            df.loc[i,j]=''
+df.columns=sheets
+df.index=sheets
+df.to_excel("correlation.xlsx",index=True)
