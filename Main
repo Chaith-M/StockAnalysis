@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 import pandas as pd
 import sys
@@ -5,26 +6,22 @@ import scipy
 
 np.set_printoptions(threshold=sys.maxsize)
 np.set_printoptions(suppress=True,precision=4)
-
 stocks=pd.ExcelFile(r'C:\Users\cheth\OneDrive\Documents\Stock.xlsx')
 sheets=stocks.sheet_names
-print(sheets)
 returns=np.zeros((249,len(sheets)))
-
 for ni,i in enumerate(sheets):
     print(ni,i)
     stock1=pd.read_excel(r'C:\Users\cheth\OneDrive\Documents\Stock.xlsx',i)
     for n in range (1,250):
         dayreturn=(stock1.loc[n,'Close']-stock1.loc[n-1,'Close'])/stock1.loc[n-1,'Close']
         returns[n-1,ni]=dayreturn
+
 correlation=np.corrcoef(returns.T,bias=0)
 
 cov_matrix = np.dot(returns.T, returns) / (returns.shape[0] - 1)
 
-# Compute the standard deviations of each stock
 std_devs = np.sqrt(np.diag(cov_matrix))
 
-# Compute the correlation matrix
 correlation = cov_matrix / np.outer(std_devs, std_devs)
 
 df = pd.DataFrame(correlation)
@@ -36,3 +33,40 @@ for i in range(len(sheets)):
 df.columns=sheets
 df.index=sheets
 df.to_excel("correlation.xlsx",index=True)
+#print(returns)
+SharpeList=[]
+#Sharpe Ratio
+for ni,i in enumerate(sheets):
+    TotalReturn = 0
+    a=[]
+    a.clear()
+    stock1=pd.read_excel(r'C:\Users\cheth\OneDrive\Documents\Stock.xlsx',i)
+    for n in range (1,250):
+        dayreturn=(stock1.loc[n,'Close']-stock1.loc[n-1,'Close'])/stock1.loc[n-1,'Close']
+        a.append(dayreturn)
+        if (n==1):
+            StartingValue=stock1.loc[n,'Close']
+        else:
+            pass
+        if(n==249):
+            TotalReturn=(stock1.loc[n,'Close']-StartingValue)/StartingValue
+            #print(TotalReturn)
+        else:
+            pass
+    ST_Dev=np.std(a)*np.sqrt(250)
+    #print(ST_Dev)
+    #print("AVG "+ str(numpy.average(a)))
+    #Avg_Returns=numpy.average(a)
+    SharpeRatio=(TotalReturn-0.0479)/ST_Dev
+    print(i,end=" ")
+    print(SharpeRatio)
+    SharpeList.append((SharpeRatio))
+#print(SharpeList)
+SharpeMatrix=np.zeros((len(sheets),1))
+for i in range(len(sheets)):
+    SharpeMatrix[i,0]=SharpeList[i]
+newdf=pd.DataFrame(SharpeMatrix)
+newdf.index=sheets
+newdf=newdf.T
+newdf.to_excel("Sharpe.xlsx",index=True)
+
